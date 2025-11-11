@@ -36,9 +36,9 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Large dataset files (don't upload EDF files to GitHub)
-dataset/
-*.edf
+# Dataset files now tracked by Git LFS
+# dataset/ - REMOVED, now uploading with LFS
+# *.edf - REMOVED, now tracked by LFS
 
 # Model checkpoints (large files)
 models/checkpoints/*.pt

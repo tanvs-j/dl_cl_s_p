@@ -1,0 +1,36 @@
+{
+  "name": {
+    "Description": "Label of electrode"
+  },
+  "x": {
+    "Description": "Position along the x-axis in subject's T1w ScanRAS coordinate system"
+  },
+  "y": {
+    "Description": "Position along the y-axis in subject's T1w ScanRAS coordinate system"
+  },
+  "z": {
+    "Description": "Position along the z-axis in subject's T1w ScanRAS coordinate system"
+  },
+  "size": {
+    "Description": "Surface area of the electrode, in mm^2"
+  },
+  "group": {
+    "Description": "Group of channels electrode belongs to (same shank)"
+  },
+  "hemisphere": {
+    "Description": "The hemisphere in which the electrode is placed",
+    "Levels": {
+      "L": "left",
+      "R": "right"
+    }
+  },
+  "WM": {
+    "Description": "The electrode is located in white matter"
+  },
+  "SOZ": {
+    "Description": "The electrode is located in the seizure onset zone"
+  },
+  "EZ": {
+    "Description": "The electrode is located in the epileptogenic zone"
+  }
+}

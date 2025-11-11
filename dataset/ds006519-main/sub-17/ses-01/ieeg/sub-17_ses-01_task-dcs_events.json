@@ -1,0 +1,23 @@
+{
+  "onset": {
+    "Description": "Onset (in seconds) of the event, measured from the beginning of the recording"
+  },
+  "duration": {
+    "Description": "Duration (in seconds) of the event, measured from the onset of the event."
+  },
+  "label": {
+    "Description": "Event label: prestim - marks the pre-stimulation interval for h2 analysis; poststim - marks the post-stimulation interval for h2 analysis; stimulation event is labeled with the bipolar pair of contacts on which electrical stimulation is applied, current intensity level and evoked clinical effect"
+  },
+  "stim_contacts": {
+    "Description": "Electrode contacts through which stimulation intensity has been applied"
+  },
+  "stim_frequency": {
+    "Description": "Electrical stimulation frequency, in Hz"
+  },
+  "stim_intensity": {
+    "Description": "Electrical stimulation current intensity, in mA"
+  },
+  "clinical_effect": {
+    "Description": "Clinical effect evoked by stimulation"
+  }
+}
