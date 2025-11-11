@@ -1,0 +1,8 @@
+train:
+  bandpass: [0.5, 40.0]
+  notch: 50.0
+  win_sec: 10.0
+  step_sec: 5.0
+  lr: 0.001
+  epochs: 10
+  batch_files: 2
