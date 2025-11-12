@@ -25,30 +25,73 @@ def load_recording(file_like, filename: str) -> Optional[Dict[str, Any]]:
         raw = mne.io.read_raw_edf(tmp, preload=True, verbose=False)
         X = raw.get_data()  # shape (ch, samples)
         return {"data": X, "sfreq": float(raw.info['sfreq']), "ch_names": raw.ch_names}
+    
     if name.endswith('.eeg'):
-        # Try BrainVision via MNE if headers exist (requires .vhdr)
+        # Support for .eeg files (BrainVision, Neuroscan, etc.)
+        tmp = None
         try:
             tmp = _save_temp_file(file_like, '.eeg')
-            # MNE BrainVision usually needs .vhdr; fall back to EDF reader if content is EDF
-            # Try pyedflib as a generic EDF-like reader
+            
+            # Method 1: Try MNE's BrainVision reader (best for .eeg/.vhdr/.vmrk triplets)
+            # Note: This needs the .vhdr file which user might not upload
+            # We'll handle single .eeg file as best as possible
+            
+            # Method 2: Try reading as EDF format (some .eeg files are actually EDF)
             try:
                 f = pyedflib.EdfReader(tmp)
                 n = f.signals_in_file
-                sigbufs = [f.readSignal(i) for i in range(n)]
-                sfreq = f.getSampleFrequency(0)
-                f.close()
-                X = np.vstack(sigbufs)
-                return {"data": X, "sfreq": float(sfreq), "ch_names": [str(i) for i in range(n)]}
+                if n > 0:
+                    sigbufs = [f.readSignal(i) for i in range(n)]
+                    sfreq = f.getSampleFrequency(0)
+                    labels = [f.getLabel(i) for i in range(n)]
+                    f.close()
+                    X = np.vstack(sigbufs)
+                    return {"data": X, "sfreq": float(sfreq), "ch_names": labels}
             except Exception:
                 pass
-            # As a last attempt, wrap as raw array not supported
-            raise RuntimeError("Unknown .eeg format (need BrainVision with headers or EDF-compatible)")
-        finally:
+            
+            # Method 3: Try MNE's auto-detection
             try:
-                if 'tmp' in locals() and os.path.exists(tmp):
-                    os.remove(tmp)
+                # MNE can sometimes infer format
+                raw = mne.io.read_raw(tmp, preload=True, verbose=False)
+                X = raw.get_data()
+                return {"data": X, "sfreq": float(raw.info['sfreq']), "ch_names": raw.ch_names}
             except Exception:
                 pass
+            
+            # Method 4: Try reading as raw binary (Neuroscan CNT format)
+            try:
+                raw = mne.io.read_raw_cnt(tmp, preload=True, verbose=False)
+                X = raw.get_data()
+                return {"data": X, "sfreq": float(raw.info['sfreq']), "ch_names": raw.ch_names}
+            except Exception:
+                pass
+            
+            raise RuntimeError(
+                ".eeg file format not recognized. "
+                "Please ensure it's in EDF, BrainVision, or Neuroscan format. "
+                "For BrainVision files, you may need to upload the .vhdr and .vmrk files together."
+            )
+        finally:
+            if tmp and os.path.exists(tmp):
+                try:
+                    os.remove(tmp)
+                except Exception:
+                    pass
+    
+    # Support for other formats
+    if name.endswith('.cnt'):
+        tmp = _save_temp_file(file_like, '.cnt')
+        raw = mne.io.read_raw_cnt(tmp, preload=True, verbose=False)
+        X = raw.get_data()
+        return {"data": X, "sfreq": float(raw.info['sfreq']), "ch_names": raw.ch_names}
+    
+    if name.endswith('.vhdr'):
+        tmp = _save_temp_file(file_like, '.vhdr')
+        raw = mne.io.read_raw_brainvision(tmp, preload=True, verbose=False)
+        X = raw.get_data()
+        return {"data": X, "sfreq": float(raw.info['sfreq']), "ch_names": raw.ch_names}
+    
     return None
 
 
