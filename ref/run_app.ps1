@@ -1,14 +1,14 @@
-# Run the FIXED seizure detection app
-Write-Host "Starting FIXED Seizure Detection System v3.0..." -ForegroundColor Green
-Write-Host "Using absolute thresholds calibrated from CHB-MIT dataset" -ForegroundColor Cyan
+# Run the seizure detection app
+Write-Host "Starting Seizure Detection System v3.1..." -ForegroundColor Green
+Write-Host "Multi-format EEG support: EDF, EEG, CNT, VHDR" -ForegroundColor Cyan
 Write-Host ""
 
 # Activate virtual environment
 & ".\venv\Scripts\Activate.ps1"
 
-# Run the fixed app
+# Run the app
 cd app
-python -m streamlit run app_fixed.py
+python -m streamlit run app.py
 
 # Keep window open if there's an error
 if ($LASTEXITCODE -ne 0) {

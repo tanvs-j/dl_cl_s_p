@@ -5,6 +5,7 @@ Reads EEG data from .edf files and performs seizure prediction
 
 import numpy as np
 import pyedflib
+import mne
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 import sys
@@ -56,10 +57,10 @@ class EDFReader:
     
     def read_edf(self, file_path: str) -> Dict:
         """
-        Read EEG data from EDF file.
+        Read EEG data from EDF/EEG/VHDR/CNT files.
         
         Args:
-            file_path: Path to .edf file
+            file_path: Path to recording file
             
         Returns:
             Dictionary with EEG data and metadata
@@ -67,41 +68,55 @@ class EDFReader:
         file_path = Path(file_path)
         
         if not file_path.exists():
-            raise FileNotFoundError(f"EDF file not found: {file_path}")
+            raise FileNotFoundError(f"EEG file not found: {file_path}")
         
-        if file_path.suffix.lower() != '.edf':
-            raise ValueError(f"File must be .edf format, got: {file_path.suffix}")
+        suffix = file_path.suffix.lower()
+        print(f"📂 Reading EEG file: {file_path.name}")
         
-        print(f"📂 Reading EDF file: {file_path.name}")
+        if suffix == '.edf':
+            return self._read_edf_pyedflib(file_path)
+        if suffix == '.vhdr':
+            raw = mne.io.read_raw_brainvision(str(file_path), preload=True, verbose="ERROR")
+            return self._raw_to_eeg_dict(raw, file_path.name)
+        if suffix == '.cnt':
+            raw = mne.io.read_raw_cnt(str(file_path), preload=True, verbose="ERROR")
+            return self._raw_to_eeg_dict(raw, file_path.name)
+        if suffix == '.eeg':
+            # Prefer BrainVision header if present
+            vhdr_path = file_path.with_suffix('.vhdr')
+            if vhdr_path.exists():
+                raw = mne.io.read_raw_brainvision(str(vhdr_path), preload=True, verbose="ERROR")
+                return self._raw_to_eeg_dict(raw, file_path.name)
+            # Attempt generic reader
+            try:
+                raw = mne.io.read_raw(str(file_path), preload=True, verbose="ERROR")
+                return self._raw_to_eeg_dict(raw, file_path.name)
+            except Exception:
+                try:
+                    return self._read_edf_pyedflib(file_path)
+                except Exception as e:
+                    raise RuntimeError(f"Unable to parse .eeg file: {e}")
         
-        # Open EDF file
+        raise ValueError(f"Unsupported EEG format: {suffix}")
+
+    def _read_edf_pyedflib(self, file_path: Path) -> Dict:
         try:
             edf_file = pyedflib.EdfReader(str(file_path))
         except Exception as e:
             raise RuntimeError(f"Failed to open EDF file: {e}")
-        
-        # Extract metadata
+
         n_channels = edf_file.signals_in_file
         signal_labels = edf_file.getSignalLabels()
         sample_frequencies = edf_file.getSampleFrequencies()
         duration = edf_file.getFileDuration()
-        
-        print(f"   Channels: {n_channels}")
-        print(f"   Duration: {duration:.2f} seconds")
-        print(f"   Sampling rates: {set(sample_frequencies)} Hz")
-        
-        # Read all channels
+
         signals = []
         for i in range(n_channels):
-            signal = edf_file.readSignal(i)
-            signals.append(signal)
-        
-        # Get patient and recording info
+            signals.append(edf_file.readSignal(i))
+
         header = edf_file.getHeader()
-        
         edf_file.close()
-        
-        # Organize data
+
         eeg_data = {
             'signals': np.array(signals),
             'labels': signal_labels,
@@ -111,11 +126,31 @@ class EDFReader:
             'header': header,
             'file_name': file_path.name
         }
-        
+
+        print(f"   Channels: {n_channels}")
+        print(f"   Duration: {duration:.2f} seconds")
+        print(f"   Sampling rates: {set(sample_frequencies)} Hz")
         print(f"   Shape: {eeg_data['signals'].shape}")
-        print(f"✓ EDF file loaded successfully")
-        
+        print("✓ EEG file loaded successfully")
+
         return eeg_data
+
+    def _raw_to_eeg_dict(self, raw: mne.io.BaseRaw, file_name: str) -> Dict:
+        data = raw.get_data()
+        labels = raw.ch_names
+        sfreq = raw.info.get('sfreq', 0.0)
+        sampling_rates = [sfreq for _ in labels]
+        duration = (data.shape[1] / sfreq) if sfreq else 0.0
+
+        return {
+            'signals': data,
+            'labels': labels,
+            'sampling_rates': sampling_rates,
+            'n_channels': data.shape[0],
+            'duration': duration,
+            'header': raw.info,
+            'file_name': file_name
+        }
     
     def select_eeg_channels(self, eeg_data: Dict, channel_names: Optional[List[str]] = None) -> np.ndarray:
         """

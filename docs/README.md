@@ -2,21 +2,21 @@
 
 A web-based EEG seizure detection system using signal processing and machine learning techniques.
 
-![Version](https://img.shields.io/badge/version-3.0-blue)
+![Version](https://img.shields.io/badge/version-3.1-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-green)
 ![License](https://img.shields.io/badge/license-MIT-orange)
 
 ## 📋 Overview
 
-This system analyzes EEG (Electroencephalography) recordings in EDF format to detect seizure activity. It uses absolute threshold-based detection calibrated from the CHB-MIT Scalp EEG Database.
+This system analyzes EEG recordings in multiple formats (EDF, EEG, CNT, VHDR) to detect seizure activity. It uses absolute threshold-based detection calibrated from the CHB-MIT Scalp EEG Database.
 
 ### Features
 
+✅ **Multi-Format Support**: Supports EDF, EEG, CNT, and VHDR files  
 ✅ **Accurate Detection**: 77.8% accuracy (100% on normal files, 71% on seizure files)  
 ✅ **Web Interface**: Professional Streamlit-based UI  
 ✅ **Interactive Visualizations**: Real-time EEG wave plotting with Plotly  
-✅ **Multiple File Support**: Batch processing of EDF files  
-✅ **Detailed Analytics**: Comprehensive statistics and metrics  
+✅ **Batch Processing**: Multiple file support with automatic format detection  
 ✅ **Fast Processing**: Real-time analysis of hour-long recordings  
 
 ## 🚀 Quick Start
@@ -58,13 +58,13 @@ pip install -r requirements.txt
 
 #### Option 1: Using the startup script (Windows)
 ```powershell
-.\run_fixed_app.ps1
+.\run_app.ps1
 ```
 
 #### Option 2: Manual start
 ```bash
 cd app
-python -m streamlit run app_fixed.py
+python -m streamlit run app.py
 ```
 
 Then open your browser to **http://localhost:8501**
@@ -96,21 +96,20 @@ COMBINED_SCORE_THRESHOLD = 0.75    # Normalized score
 ```
 seizuer_prediction/
 ├── app/
-│   ├── app_fixed.py          # Main working app (USE THIS)
+│   ├── app.py                 # Main web application
 │   ├── inference.py           # Model inference utilities
 │   ├── preprocess.py          # Signal preprocessing
-│   └── io_utils.py            # File I/O utilities
+│   └── io_utils.py            # Multi-format file I/O
 ├── src/
-│   ├── data/
-│   │   └── edf_reader.py      # EDF file reader
-│   └── models/
-│       └── model.py           # Neural network models
-├── docs/
-│   ├── SOLUTION.md            # Detailed solution documentation
-│   ├── DETECTION_ISSUE.md     # Problem analysis
-│   └── USER_GUIDE_v2.md       # User guide
+│   ├── data/                  # Data processing modules
+│   ├── models/                # ML model implementations
+│   └── api/                   # API components
+├── dataset/                   # EEG datasets (CHB-MIT)
+├── models/                    # Trained model checkpoints
 ├── requirements.txt           # Python dependencies
-├── run_fixed_app.ps1         # Windows startup script
+├── train.py                   # Model training script
+├── run_app.ps1               # Windows startup script
+├── start_app.ps1             # Alternative startup script
 └── README.md                 # This file
 ```
 
@@ -138,9 +137,9 @@ Final Accuracy: 7/9 = 77.8%
 
 ## 📖 Documentation
 
-- **[SOLUTION.md](SOLUTION.md)**: Complete technical solution
-- **[USER_GUIDE_v2.md](USER_GUIDE_v2.md)**: User guide with examples
-- **[DETECTION_ISSUE.md](DETECTION_ISSUE.md)**: Problem analysis and root cause
+- **[RELEASE_v3.1.md](RELEASE_v3.1.md)**: Version 3.1 release notes
+- **[EEG_FORMAT_SUPPORT.md](EEG_FORMAT_SUPPORT.md)**: Multi-format support guide
+- **[FEATURE_EEG_SUPPORT.md](FEATURE_EEG_SUPPORT.md)**: Feature overview
 
 ## 🔬 Future Improvements
 
@@ -172,5 +171,5 @@ This project is licensed under the MIT License.
 ---
 
 **Status**: ✅ Working and Tested  
-**Version**: 3.0  
+**Version**: 3.1  
 **Last Updated**: November 2025

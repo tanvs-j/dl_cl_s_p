@@ -18,6 +18,16 @@ def _save_temp_file(file_like, suffix: str) -> str:
     return tf.name
 
 
+def _is_git_annex_placeholder(path: str) -> bool:
+    """Detect git-annex pointer files (no actual data)."""
+    try:
+        with open(path, 'rb') as fh:
+            head = fh.read(4096)
+        return b'.git/annex' in head or b'annex/objects' in head
+    except Exception:
+        return False
+
+
 def load_recording(file_like, filename: str) -> Optional[Dict[str, Any]]:
     name = filename.lower()
     if name.endswith('.edf'):
@@ -82,12 +92,22 @@ def load_recording(file_like, filename: str) -> Optional[Dict[str, Any]]:
     # Support for other formats
     if name.endswith('.cnt'):
         tmp = _save_temp_file(file_like, '.cnt')
+        if _is_git_annex_placeholder(tmp):
+            raise RuntimeError(
+                "Uploaded Neuroscan .cnt is a git-annex placeholder. "
+                "Download the real EEG file before uploading."
+            )
         raw = mne.io.read_raw_cnt(tmp, preload=True, verbose=False)
         X = raw.get_data()
         return {"data": X, "sfreq": float(raw.info['sfreq']), "ch_names": raw.ch_names}
     
     if name.endswith('.vhdr'):
         tmp = _save_temp_file(file_like, '.vhdr')
+        if _is_git_annex_placeholder(tmp):
+            raise RuntimeError(
+                "Uploaded BrainVision .vhdr is a git-annex placeholder. "
+                "Download the real EEG files (vhdr/vmrk/eeg) before uploading."
+            )
         raw = mne.io.read_raw_brainvision(tmp, preload=True, verbose=False)
         X = raw.get_data()
         return {"data": X, "sfreq": float(raw.info['sfreq']), "ch_names": raw.ch_names}

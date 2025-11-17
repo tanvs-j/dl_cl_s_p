@@ -45,10 +45,12 @@ def line_length(x: np.ndarray) -> float:
     return float(np.mean(np.abs(np.diff(x, axis=-1))))
 
 
-def simple_heuristic_score(windows: np.ndarray, sfreq: float) -> float:
+def simple_heuristic_score(windows: np.ndarray, sfreq: float, return_per_window: bool = False):
     """Return [0,1] score indicating seizure likelihood from windows.
     Uses line-length and spectral entropy. Looks for ANY window with seizure-like activity."""
     if windows.size == 0:
+        if return_per_window:
+            return 0.0, np.array([], dtype=float)
         return 0.0
     
     scores = []
@@ -67,15 +69,20 @@ def simple_heuristic_score(windows: np.ndarray, sfreq: float) -> float:
         # Combined score: both must be high
         window_score = ll_score * 0.7 + se_score * 0.3
         scores.append(window_score)
-    
+
+    scores_arr = np.array(scores, dtype=float)
+
     # Use percentile instead of mean - if top 10% of windows show seizure, flag it
-    top_percentile = np.percentile(scores, 90)
-    
+    top_percentile = np.percentile(scores_arr, 90)
+
     # Also check if many windows exceed threshold
-    high_score_count = np.sum(np.array(scores) > 0.3)
-    high_score_ratio = high_score_count / len(scores)
-    
+    high_score_count = np.sum(scores_arr > 0.3)
+    high_score_ratio = high_score_count / len(scores_arr)
+
     # Final score: max of (top percentile, high score ratio)
     final_score = max(top_percentile, high_score_ratio)
-    
-    return float(np.clip(final_score, 0.0, 1.0))
+    final_score = float(np.clip(final_score, 0.0, 1.0))
+
+    if return_per_window:
+        return final_score, scores_arr
+    return final_score
