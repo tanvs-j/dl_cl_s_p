@@ -31,8 +31,7 @@ CHECKPOINT_DIR = Path(__file__).resolve().parents[1] / "models" / "checkpoints"
 DEFAULT_CHECKPOINT = CHECKPOINT_DIR / "best.pt"
 
 
-st.set_page_config(page_title="Seizure Prediction Dashboard", page_icon="🧠", layout="wide")
-st.set_option("server.maxUploadSize", 4096)
+st.set_page_config(page_title="Seizure Prediction Dashboard", page_icon="", layout="wide")
 
 CSS = """
 <style>
